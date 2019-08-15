@@ -1,10 +1,15 @@
 package com.weiyi.transaction;
 
 import java.sql.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author weiyi
- * @describe
+ * @describe:
+ *          此demo读两次数据库，第一次读到未提交的数据，脏读
+ *          demo1回滚之后再次读取数据，发生读取数据不一致的情况
+ *          My name is 洋, I'm id is 1 and My balary is 0
+ *          My name is 洋, I'm id is 1 and My balary is 1000
  * @since 2019/8/15 - 9:06
  */
 public class TransactionDemo1 {
@@ -28,18 +33,21 @@ public class TransactionDemo1 {
             String sql = "select * from account";
             // 预编译sql语句
             preparedStatement = connection.prepareStatement(sql);
-            // 执行接收返回结果
-            ResultSet resultSet = preparedStatement.executeQuery();
-            // 提交事务
-            connection.commit();
-            // 解析结果
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                if (id == 1) {
-                    int balary = resultSet.getInt("balary");
-                    String name = resultSet.getString("username");
-                    System.out.println("My name is " + name + ", I'm id is " + id + " and My balary is " + balary);
+            for (int i = 1; i <= 2; i++) {
+                // 执行接收返回结果
+                ResultSet resultSet = preparedStatement.executeQuery();
+                // 提交事务
+                connection.commit();
+                // 解析结果
+                while (resultSet.next()) {
+                    int id = resultSet.getInt("id");
+                    if (id == 1) {
+                        int balary = resultSet.getInt("balary");
+                        String name = resultSet.getString("username");
+                        System.out.println("My name is " + name + ", I'm id is " + id + " and My balary is " + balary);
+                    }
                 }
+                TimeUnit.SECONDS.sleep(6);
             }
         } catch (Exception e) {
             connection.rollback();

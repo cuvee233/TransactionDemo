@@ -1,14 +1,12 @@
 package com.weiyi.transaction;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author weiyi
- * @describe
+ * @describe: 此demo测试脏读，将数据库的隔离级别设置为Read Commettied 读未提交
+ * 此demo修改数据库数据，并sleep十秒，然后报错回滚
  * @since 2019/8/15 - 9:50
  */
 public class TransactionDemo2 {
@@ -17,7 +15,7 @@ public class TransactionDemo2 {
     private static final String USER = "root";
     private static final String PASSWORD = "2580";
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -38,14 +36,28 @@ public class TransactionDemo2 {
             if (i > 0) {
                 System.out.println("Update seccess " + i);
             }
-            TimeUnit.SECONDS.sleep(10);
-            int flag = 1/0;
+            TimeUnit.SECONDS.sleep(5);
+            int flag = 1 / 0;
             connection.commit();
         } catch (Exception e) {
-            connection.rollback();
+            try {
+                connection.rollback();
+                System.out.println("Program rollback");
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+
         } finally {
-            preparedStatement.close();
-            connection.close();
+            try {
+                preparedStatement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
